@@ -15,44 +15,6 @@ fn main() -> Result<()> {
     evaluate_users_solution(&conn)
 }
 
-fn evaluate_users_solution(conn: &Connection) -> Result<()> {
-    println!("🔍 Attempt detected! Evaluating your solution...");
-
-    let test_sql = fs::read_to_string(TEST_SQL_PATH).expect("Could not read test.sql");
-
-    let mut stmt = conn.prepare(&test_sql)?;
-
-    let rows = stmt.query_map([], |row| {
-        Ok((
-            row.get::<_, i64>(0)?, // cube_id
-            row.get::<_, i64>(1)?, // monster_id
-            row.get::<_, i64>(2)?, // is_correct
-        ))
-    })?;
-
-    let mut all_correct = true;
-    println!("\n📊 Test Results:");
-    for row in rows {
-        let (cube_id, monster_id, is_correct) = row?;
-        if is_correct == 1 {
-            println!(" cube {} → monster {} ✔ correct", cube_id, monster_id);
-        } else {
-            println!(" cube {} → monster {} ✘ incorrect", cube_id, monster_id);
-            all_correct = false;
-        }
-    }
-
-    println!();
-    if all_correct {
-        println!("🏆 **You have mastered the Cubical Dungeon’s first trial!**");
-    } else {
-        println!("❌ Some answers were incorrect.");
-        println!("The Warden mutters: 'Refine your query, wanderer.'");
-    }
-
-    Ok(())
-}
-
 fn create_db_and_bail_if_missing() -> Result<()> {
     if std::path::Path::new(DB_PATH).exists() {
         return Ok(());
@@ -112,6 +74,44 @@ fn check_if_user_attempted_challenge(conn: &Connection) -> Result<()> {
     } else {
         Ok(())
     }
+}
+
+fn evaluate_users_solution(conn: &Connection) -> Result<()> {
+    println!("🔍 Attempt detected! Evaluating your solution...");
+
+    let test_sql = fs::read_to_string(TEST_SQL_PATH).expect("Could not read test.sql");
+
+    let mut stmt = conn.prepare(&test_sql)?;
+
+    let rows = stmt.query_map([], |row| {
+        Ok((
+            row.get::<_, i64>(0)?, // cube_id
+            row.get::<_, i64>(1)?, // monster_id
+            row.get::<_, i64>(2)?, // is_correct
+        ))
+    })?;
+
+    let mut all_correct = true;
+    println!("\n📊 Test Results:");
+    for row in rows {
+        let (cube_id, monster_id, is_correct) = row?;
+        if is_correct == 1 {
+            println!(" cube {} → monster {} ✔ correct", cube_id, monster_id);
+        } else {
+            println!(" cube {} → monster {} ✘ incorrect", cube_id, monster_id);
+            all_correct = false;
+        }
+    }
+
+    println!();
+    if all_correct {
+        println!("🏆 **You have mastered the Cubical Dungeon’s first trial!**");
+    } else {
+        println!("❌ Some answers were incorrect.");
+        println!("The Warden mutters: 'Refine your query, wanderer.'");
+    }
+
+    Ok(())
 }
 
 fn get_ret(msg: &str) -> std::result::Result<(), rusqlite::Error> {
