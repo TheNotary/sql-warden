@@ -6,7 +6,11 @@ static DB_PATH: &str = "database.db";
 static MIGRATION_PATH: &str = "migration.sql";
 static TEST_SQL_PATH: &str = "test.sql";
 
-fn main() -> Result<()> {
+fn main() {
+    administer_challenge().unwrap();
+}
+
+fn administer_challenge() -> Result<()> {
     create_db_and_bail_if_missing()?;
 
     let conn = Connection::open(DB_PATH)?;
@@ -52,27 +56,27 @@ fn check_if_user_attempted_challenge(conn: &Connection) -> Result<()> {
         "SELECT name FROM sqlite_master WHERE type='view' AND name='strongest_monsters';",
     )?;
 
-    let attempt: Option<String> = stmt.query_row([], |row| row.get(0)).optional()?;
+    if let Ok(attempt) = stmt
+        .query_row([], |row| row.get::<usize, String>(0))
+        .optional()
+    {
+        match attempt {
+            None => {
+                println!("🧙 The Warden whispers: You have not yet attempted the challenge.");
+                println!("The dungeon is ready. Create your solution as:");
+                println!("  CREATE VIEW strongest_monsters AS ... ;");
+                println!("");
+                println!("To inspect the database schema:");
+                println!("  sqlite3 {DB_PATH}");
+                println!("  .schema");
 
-    // FIXME: Use match
-    // match attempt {
-    //     None => {
-
-    //     }
-    // }
-
-    if attempt.is_none() {
-        println!("🧙 The Warden whispers: You have not yet attempted the challenge.");
-        println!("The dungeon is ready. Create your solution as:");
-        println!("  CREATE VIEW strongest_monsters AS ... ;");
-        println!("");
-        println!("To inspect the database schema:");
-        println!("  sqlite3 {DB_PATH}");
-        println!("  .schema");
-
-        get_ret("Exiting")
+                get_ret("Exiting")
+            }
+            Some(_) => Ok(()),
+        }
     } else {
-        Ok(())
+        println!("Something is bad with querying the database?");
+        get_ret("Exiting")
     }
 }
 
