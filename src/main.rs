@@ -6,8 +6,12 @@ static DB_PATH: &str = "database.db";
 static MIGRATION_PATH: &str = "migration.sql";
 static TEST_SQL_PATH: &str = "test.sql";
 
-fn main() {
-    administer_challenge().unwrap();
+fn main() -> Result<()> {
+    match administer_challenge() {
+        Ok(_) => Ok(()),
+        Err(rusqlite::Error::SqliteFailure(_, _)) => Ok(()),
+        Err(err) => Err(err),
+    }
 }
 
 fn administer_challenge() -> Result<()> {
